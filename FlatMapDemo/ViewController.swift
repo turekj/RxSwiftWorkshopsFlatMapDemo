@@ -96,15 +96,14 @@ class ViewController: UIViewController {
 
         self.requests.accept(requests)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.requests.accept(self.requests.value.filter { request in
-                if request.id == id && request.status == .cancelled {
-                    return false
-                }
-
-                return true
-            })
-        }
+        Observable.just(())
+            .delay(1.5, scheduler: MainScheduler.instance)
+            .withLatestFrom(self.requests)
+            .map { requests in
+                requests.filter { !($0.id == id && $0.status == .cancelled) }
+            }
+            .bind(to: self.requests)
+            .disposed(by: disposeBag)
     }
 
     private let disposeBag = DisposeBag()
